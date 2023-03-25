@@ -1,0 +1,51 @@
+Notes on Twitter data extraction
+Example Account: Elon Musk 
+
+
+TweetElementXPATH: 
+
+
+URL: https://twitter.com/elonmusk/status/1637577467819970560
+Text: - 
+Text-XPATH: 
+Image-XPATH: 
+/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/section/div/div/div[1]/div/div/article/div/div/div[2]/div[2]/div[3]/div/div/div/div/div/a/div/div[2]/div/img
+	
+URL: https://twitter.com/elonmusk/status/1637511926925127680
+Text: A latte is really just an excuse for adults to order warm milk without sounding like a baby	
+Text-XPATH: 
+/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/section/div/div/div[3]/div/div/article/div/div/div[2]/div[2]/div[2]/div/span
+Image-XPATH: 
+
+URL: https://twitter.com/elonmusk/status/1637331821439463425
+Text: en tro py … en tro py … no escaping that for me
+Text-XPATH:
+/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/section/div/div/div[7]/div/div/article/div/div/div[2]/div[2]/div[2]/div/span 
+Image-XPATH: 
+
+
+N-th tweet element XPATH: 
+/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/section/div/div/div[n-th Tweet]/div 
+
+Seems consistent accross account URLs. 
+
+Investigate: 
+
+https://twitter.com/elonmusk
+VS 
+https://twitter.com/elonmusk/with_replies
+
+
+Embed: 
+	Doesn't seem to be identifiable from static source elements. Maybe it's calculated by js or in the server backend. 
+	<blockquote class="twitter-tweet"><p lang="zxx" dir="ltr"><a href="https://t.co/mZu9UEmFOB">pic.twitter.com/mZu9UEmFOB</a></p>&mdash; Elon Musk (@elonmusk) <a href="https://twitter.com/elonmusk/status/1637399363503681536?ref_src=twsrc%5Etfw">March 19, 2023</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+
+
+The span class identifier 
+css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0
+cannot be used as regex count identifier without additional extensive parsing. 
+Reasoning: All tweets appear to have this string, but many more elements also have this as class id, requiering context aware parsing. 
+
+nAppearanceOfString('data-testid="tweetText"') + nAppearanceOfString('data-testid="tweetPhoto"')
+might be a reliable indicator for the number of tweets currently loaded. 
+To do: Investigate /status/<NUMERICALID> 
