@@ -11,7 +11,7 @@ from selenium.webdriver import ActionChains
 #from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.firefox.options import Options
 import os, time 
-
+import logging 
 # Harvest Twitter data :) 
 # Twitter is slighty tougher on the bots but can't defeat Selenium. 
 
@@ -23,18 +23,20 @@ class TwitterInterface():
 		self.username = username
 		self.password = password
 		
+		# Get currently initialized custom logger.
+		self.logger = logging.getLogger()
 		#State vars. 
 		self.loggedIn = False 
 		self.headless = False 
 		self.tweetsList = [] 
 		self.tweetData = dict() 
 		
-		Options = Options()
+		options = Options()
 		if headless == True:
 			Options.headless = True
-			
-		self.webDriver = webdriver.Firefox(options=Options, executable_path=GeckoDriverManager().install())		
-
+		# Passing options is causing trouble currently. 	
+		#self.webDriver = webdriver.Firefox(options=Options, executable_path=GeckoDriverManager().install())		
+		self.webDriver = webdriver.Firefox( executable_path=GeckoDriverManager().install())		
 		
 		# See docs/tweetExtraction.txt for reasoning for this approach.  
 	def getTweetsOfAccount(self, accountName:str, nLastTweets:int ) -> list:
@@ -49,7 +51,7 @@ class TwitterInterface():
 			pass 
 		return self.tweetsList
 
-	def getTweetsWithReplosAccount(self, accountName:str, nLastTweets:int)-> list: 
+	def getTweetsWithRepliesAccount(self, accountName:str, nLastTweets:int)-> list: 
 		pass 
 
     # for possible future direct multimodal evaluation of tweet. 
@@ -88,21 +90,45 @@ class TwitterInterface():
 	def login(self)->bool:
 		assert isinstance(self.username, str) and self.username != "" 
 		self.webDriver.get('https://twitter.com/login')
-		username = self.webDriver.find_element(By.XPATH, "/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input")
-		key.send_keys(self.username)
+		# Wait for the page to load otherwise the next method will usually fail. 
+		time.sleep(5)
 		
+		try: 
+			username = self.webDriver.find_element(By.XPATH, "/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input")
+		except Exception as err: 
+			self.logger.error("Could not find username input field.")
+			return False 
+		username.send_keys(self.username)
+		# Wait a bit until pressing the button, we would not want to appear as bots :). 
+		time.sleep(2)
 		# Get continue button. 
-		continueButton  = self.webDriver.find_element(By.XPATH, "/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]/div")
-		self.webDriver.execute_script("arguments[0].click();", key);
-		time.sleep(10)
+		try: 
+			continueButton  = self.webDriver.find_element(By.XPATH, "/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]/div")
+		except Exception as err: 
+			self.logger.error("Could not find username/email continue button.") 
+			return False 
+		self.webDriver.execute_script("arguments[0].click();", continueButton);
+		time.sleep(5)
 		
-
-		password = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input")
+		
+		try: 
+			#password = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input")
+			password = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input") 
+		except Exception as err: 
+			self.logger.error("Could not find password field.") 
+			return False 
 		# sends the password to the password input
 		password.send_keys(self.password)
-		continueButton = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div[1]/div/div/div/div")
-		self.webDriver.execute_script("arguments[0].click();", key)
+		# Wait a bit until pressing the button, we would not want to appear as bots :). 
 		time.sleep(2)
+		try: 
+			continueButton = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]/div")
+		except Exception as err: 
+			self.logger.error("Could not find password continue button.")
+			return False 
+		self.webDriver.execute_script("arguments[0].click();", continueButton)
+		time.sleep(2)
+		
 		self.loggedIn = False
 		return True 
 
