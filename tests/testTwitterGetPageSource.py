@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-from WI.spiders.twitter import TwitterInterface
+from WI.interface.twitter import TwitterInterface
 from WI.utilities.logger import WILogger
+import logging
 
 def main(): 
-	logger = WILogger.setupStandardLogger("logger", "log.txt",level=logging.DEBUG)
+	wiLogger = WILogger() 
+	wiLogger.setupStandardLogger("wiLogger", "log.txt", logging.DEBUG)
 	twitterInterface = TwitterInterface() 
+	wiLogger.info("Getting page source")
 	source = twitterInterface.getPageSourceDbg("https://twitter.com/elonmusk")
 	print(source) 
+	
 if __name__ == "__main__": 
 	main() 

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 app = FastAPI() 
 
-@app.get("/")
+@app.get("/twitter/{params}")
 def readRoot():
     return {"Hello": "World"}
 	

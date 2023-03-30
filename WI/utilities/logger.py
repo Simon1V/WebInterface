@@ -6,12 +6,11 @@ import sys
 class WILogger:
 	def __init__(self): 
 		pass 
-	
 	# https://stackoverflow.com/questions/34954373/disable-format-for-some-messages
 	def setupConditionalLogger(self, logFilePath:str, debugLevelConsole:int, debugLevelFile:int, conditionalFormatterForConsole:bool=False):
 		rotatingFile = RotatingFileHandler(logFilePath , mode='a', maxBytes=5 * 1024 * 1024, backupCount=5, encoding=None, delay=0)
 
-		class ConditionalFormatter(logging.Formatter):
+		class ConditionalFormatter(self, logging.Formatter):
 			def format(self, record):
 				if hasattr(record, 'simple') and record.simple:
 					return record.getMessage()
@@ -46,7 +45,7 @@ class WILogger:
 		logger.addHandler(fileHandler)
 		return logger
 
-	def setupStandardLogger(self, name:str, logFile:str, level:int=logging.INFO):
+	def setupStandardLogger(self, name:str, logFile:str, level:int):
 		formatter = logging.Formatter('%(levelname)s %(asctime)s - %(message)s')      
 
 		consoleHandler = logging.StreamHandler(sys.stdout)

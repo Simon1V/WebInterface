@@ -132,7 +132,7 @@ class TwitterInterface():
 		self.loggedIn = False
 		return True 
 
-	def tweet(self, message:str)->bool: 
+	def tweet(self, message:str, picture:None)->bool: 
 		assert self.loggedIn == True and isinstance(message, str)  
 		pass 
 			
