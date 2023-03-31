@@ -7,9 +7,10 @@ def main():
 	wiLogger = WILogger() 
 	logger = wiLogger.setupStandardLogger("wiLogger", "log.txt", logging.DEBUG)
 	twitterInterface = TwitterInterface() 
-	logger.info("Getting page source")
-	source = twitterInterface.getPageSourceDbg("https://twitter.com/elonmusk")
-	print(source) 
+	url = "https://twitter.com/nvidia/status/1640477201479901185"
+	logger.info("Getting screenshot from URL " + url)
+	twitterInterface.getTweetScreenshotByURL(url)
+	
 	
 if __name__ == "__main__": 
 	main() 

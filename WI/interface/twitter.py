@@ -4,14 +4,15 @@ from webdriver_manager.firefox import GeckoDriverManager
 from bs4 import BeautifulSoup
 from WI.utilities.logger import WILogger 
 from selenium.webdriver.common.by import By
-
-from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 #from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.firefox.options import Options
-import os, time 
+import os
+import time 
 import logging 
+from datetime import datetime 
+
 # Harvest Twitter data :) 
 # Twitter is slighty tougher on the bots but can't defeat Selenium. 
 
@@ -58,10 +59,18 @@ class TwitterInterface():
 	def getTweetScreenshots(self, accountName:str, nLastTweets:int) -> list: 
 		pass 
 
-    
-	def getTweetScreenshotByURL(self, tweetURL:str) -> list: 
+    # Some tweetURLs require to be logged in (example: visibility only for followers), ignore for now. 
+	def getTweetScreenshotByURL(self, tweetURL:str) -> bool : 
 		assert isinstance(tweetURL, str)
-		pass 
+		now = datetime.now() 
+		timestring = now.strftime("%d_%m_%Y, %H_%M_%S")
+		try: 
+			self.webDriver.get(tweetURL)
+			time.sleep(3)
+			self.webDriver.save_screenshot(timestring + '.png') 
+		except Exception as err: 
+			return False 
+		return True 
     
 	def getPageSource(self, url:str,nLastTweets:int ) -> str: 
 		while(enoughDataAvailable == False): 
@@ -133,29 +142,31 @@ class TwitterInterface():
 
 	def tweet(self, message:str, picture:None) -> bool: 
 		assert self.loggedIn == True and isinstance(message, str)  
-		pass 
+		return True  
 			
 	def retweet(self, messageURL:str) -> bool:
 		assert self.loggedIn == True and isinstance(messageURL, str)  
-		pass 
+		return True  
 		
 	def like(self,messageURL:str) -> bool: 
 		assert self.loggedIn == True and isinstance(messageURL, str)  
-		pass 
+		return True  
 		
 	def follow(self, accountName:str) -> bool: 
 		assert self.loggedIn == True and isinstance(accountName, str)
-		pass 
+		return True 
 	
 	def unfollow(self, accountName:str): 
 		assert self.loggedIn == True and isinstance(accountName, str)
-		pass 
+		return True 
 	
 	def getFollowerList(): 
 		pass 
 	
 	def getFollowingList(): 
 		pass 
+		
+	
 
 class TwitterSpiderScrapy(): 
     def __init__(self): 
