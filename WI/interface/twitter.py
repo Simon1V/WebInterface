@@ -51,11 +51,11 @@ class TwitterInterface():
 			pass 
 		return self.tweetsList
 
-	def getTweetsWithRepliesAccount(self, accountName:str, nLastTweets:int)-> list: 
+	def getTweetsWithRepliesAccount(self, accountName:str, nLastTweets:int) -> list: 
 		pass 
 
     # for possible future direct multimodal evaluation of tweet. 
-	def getTweetScreenshots(self, accountName:str, nLastTweets:int) ->list: 
+	def getTweetScreenshots(self, accountName:str, nLastTweets:int) -> list: 
 		pass 
 
     
@@ -77,7 +77,7 @@ class TwitterInterface():
 		return str(soup.encode('utf-8'))
 
     # Only used for debugging. 
-	def getPageSourceDbg(self, url:str): 
+	def getPageSourceDbg(self, url:str) -> str: 
 		self.webDriver.get(url)
 		#self.webDriver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
 		soup = BeautifulSoup(self.webDriver.page_source, features="lxml")
@@ -132,7 +132,7 @@ class TwitterInterface():
 		self.loggedIn = False
 		return True 
 
-	def tweet(self, message:str, picture:None)->bool: 
+	def tweet(self, message:str, picture:None) -> bool: 
 		assert self.loggedIn == True and isinstance(message, str)  
 		pass 
 			
