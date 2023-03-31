@@ -112,7 +112,6 @@ class TwitterInterface():
 		
 		
 		try: 
-			#password = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input")
 			password = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input") 
 		except Exception as err: 
 			self.logger.error("Could not find password field.") 
@@ -136,18 +135,27 @@ class TwitterInterface():
 		assert self.loggedIn == True and isinstance(message, str)  
 		pass 
 			
-	def retweet(self):
+	def retweet(self, messageURL:str) -> bool:
+		assert self.loggedIn == True and isinstance(messageURL, str)  
 		pass 
 		
-	def like(self): 
+	def like(self,messageURL:str) -> bool: 
+		assert self.loggedIn == True and isinstance(messageURL, str)  
 		pass 
 		
-	def follow(self, accountName:str): 
+	def follow(self, accountName:str) -> bool: 
+		assert self.loggedIn == True and isinstance(accountName, str)
 		pass 
 	
 	def unfollow(self, accountName:str): 
+		assert self.loggedIn == True and isinstance(accountName, str)
 		pass 
-		
+	
+	def getFollowerList(): 
+		pass 
+	
+	def getFollowingList(): 
+		pass 
 
 class TwitterSpiderScrapy(): 
     def __init__(self): 
