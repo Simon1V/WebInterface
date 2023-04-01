@@ -129,7 +129,8 @@ dmypy.json
 .pyre/
 
 # Credentials stored there
-config/*
+config/credentials.json
 
 .vscode/*
 geckodriver.log
+
