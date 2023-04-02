@@ -45,7 +45,7 @@ class WILogger:
 		logger.addHandler(fileHandler)
 		return logger
 
-	def setupStandardLogger(self, name:str, logFile:str, level:int):
+	def setupStandardLogger(self, name:str, logFile:str, level:int=logging.DEBUG):
 		formatter = logging.Formatter('%(levelname)s %(asctime)s - %(message)s')      
 
 		consoleHandler = logging.StreamHandler(sys.stdout)

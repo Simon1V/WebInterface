@@ -1,7 +1,0 @@
-INFO 2023-03-31 09:53:02,702 - Getting page source
-DEBUG 2023-04-02 08:42:58,846 - This is a logger test at debug level
-INFO 2023-04-02 08:42:58,846 - This is a logger test at info level
-WARNING 2023-04-02 08:42:58,846 - This is a logger test at warning level
-ERROR 2023-04-02 08:42:58,846 - This is a logger test at error level
-CRITICAL 2023-04-02 08:42:58,846 - This is a logger test at critical level
-INFO 2023-04-02 08:44:10,071 - Getting page source
