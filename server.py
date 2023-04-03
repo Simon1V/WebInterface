@@ -7,10 +7,20 @@ from crochet import setup, wait_for
 
 from WI.interface.reddit import OnepagerSpider
 from WI.utilities.logger import WILogger
+# Not sure if this is a good name
+from WI.utilities.filestate import FileState
 import json
 
-with open("scrapy_settings.json", "r") as f:
+
+
+fileState = FileState() 
+with open(fileState.SCRAPY_SETTINGS_FILE, "r") as f:
     settings = json.load(f)
+
+wiLogger = WILogger()
+logger = wiLogger.setupConditionalLogger(logFilePath=fileState.LOG_FILE, debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
+    
+logger.debug("Current settings: " + str(settings))
 
 # Setup crochet
 setup()
@@ -20,7 +30,7 @@ scraped_data_queue = Queue()
 
 app = FastAPI() 
 
-@app.get("/twitter/{params}")
+@app.get("/twitter/")
 def readRoot():
     return {"Hello": "World"}
 	
@@ -36,11 +46,6 @@ def scrapePermalink(permalink: str):
     # Create a CrawlerRunner
     runner = CrawlerRunner(settings)
 
-    # New changes broke the logger, so I disabled it for now
-    #logger = WILogger()
-    #logger.setupConditionalLogger("logger", logFilePath="logs/scrapy.log",debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
-	#logger.setupStandardLogger("logger", logFilePath="logs/scrapy.log",debugLevelConsole=logging.DEBUG)
-    
 	# # Configure logging
     # configure_logging(install_root_handler=False)
     # configure_logging(settings=settings)

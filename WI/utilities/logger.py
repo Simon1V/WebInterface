@@ -3,20 +3,20 @@ from logging.handlers import RotatingFileHandler
 import logging 
 import sys 
 
-class WILogger:
-	def __init__(self): 
-		pass 
-	# https://stackoverflow.com/questions/34954373/disable-format-for-some-messages
-	def setupConditionalLogger(self, logFilePath:str, debugLevelConsole:int, debugLevelFile:int, conditionalFormatterForConsole:bool=False):
-		rotatingFile = RotatingFileHandler(logFilePath , mode='a', maxBytes=5 * 1024 * 1024, backupCount=5, encoding=None, delay=0)
-
-		class ConditionalFormatter(self, logging.Formatter):
+class ConditionalFormatter(logging.Formatter):
 			def format(self, record):
 				if hasattr(record, 'simple') and record.simple:
 					return record.getMessage()
 				else:
 					return logging.Formatter.format(self, record)
 
+class WILogger:
+	def __init__(self): 
+		pass 
+	
+	def setupConditionalLogger(self, logFilePath:str, debugLevelConsole:int, debugLevelFile:int, conditionalFormatterForConsole:bool=False):		
+		rotatingFile = RotatingFileHandler(logFilePath , mode='a', maxBytes=5 * 1024 * 1024, backupCount=5, encoding=None, delay=0)
+			
 		rotatingFileFormatter = ConditionalFormatter('%(asctime)s %(levelname)s - %(message)s')
 		rotatingFile.setFormatter(rotatingFileFormatter)
 		rotatingFile.setLevel(debugLevelFile)
