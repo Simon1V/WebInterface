@@ -12,6 +12,8 @@ import os
 import time 
 import logging 
 from datetime import datetime 
+import pickle 
+
 
 # Harvest Twitter data :) 
 # Twitter is slighty tougher on the bots but can't defeat Selenium. 
@@ -45,9 +47,9 @@ class TwitterInterface():
         # Get the page source until enough of the page is visible for nLastTweets to be extracted. 
         # There is very likely a better way to get the number of currently loaded tweets. 
 		twitterAccountURL = TWITTER_BASE + accountName
-		enoughDataAvailable = False 
-		pageSource = getPageSource(accountName, nLastTweets)
-		# Enough data has been loaded, fill up self.tweetsList fit dictionaries containing tweet data. 
+		pageSource = self.getPageSource(twitterAccountURL, nLastTweets)
+		print(pageSource)
+		return 
 		for i in range(0, nLastTweets): 
 			pass 
 		return self.tweetsList
@@ -73,28 +75,39 @@ class TwitterInterface():
 		return True 
     
 	def getPageSource(self, url:str,nLastTweets:int ) -> str: 
+		self.webDriver.get(url)
+		
+		htmlSource = ""
+		enoughDataAvailable=False 
+		
 		while(enoughDataAvailable == False): 
-			self.webDriver.get(url)
-			tweetCount = self.getNumberOfContainedTweets(self.webDriver.page_source)
+			htmlSource = self.webDriver.execute_script("return document.documentElement.outerHTML")
+			time.sleep(10)
+			tweetCount = self.getNumberOfContainedTweets(htmlSource)
 			if (nLastTweets >= tweetCount): 
 				#load more of the page.  
 				self.webDriver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
 				continue 
 			# In case we are done or nLastTweets< tweetCount, terminate loop.
 			enoughDataAvailable = True         
-		soup = BeautifulSoup(self.webDriver.page_source, features="lxml")
-		return str(soup.encode('utf-8'))
-
-    # Only used for debugging. 
+		#soup = BeautifulSoup(self.webDriver.page_source, features="lxml")
+		#return str(soup.encode('utf-8'))
+		return htmlSource
+		
+	# Debugging function. Thx GPT, this works better. 
 	def getPageSourceDbg(self, url:str) -> str: 
 		self.webDriver.get(url)
-		#self.webDriver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-		soup = BeautifulSoup(self.webDriver.page_source, features="lxml")
-		return str(soup.encode('utf-8'))
-
+		time.sleep(10)
+		htmlSource = self.webDriver.execute_script("return document.documentElement.outerHTML")
+		return htmlSource
+		
 	def getNumberOfContainedTweets(self, htmlSource:str) -> int: 
-        
-		return 10 
+		s1 = r'data-testid="tweetText"'
+		s2 = r'data-testid="tweetPhoto"'
+		nTweets = htmlSource.count(s1) + htmlSource.count(s2) 
+		print(nTweets) 
+		#assert nTweets > 0 
+		return nTweets 
 	
 	def login(self)->bool:
 		assert isinstance(self.username, str) and self.username != "" 
@@ -103,6 +116,7 @@ class TwitterInterface():
 		time.sleep(5)
 		
 		try: 
+			#username = self.webDriver.find_element(By.XPATH,"/html/body/div/div/div/div[1]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input")
 			username = self.webDriver.find_element(By.XPATH, "/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input")
 		except Exception as err: 
 			self.logger.error("Could not find username input field.")
@@ -119,9 +133,13 @@ class TwitterInterface():
 		self.webDriver.execute_script("arguments[0].click();", continueButton);
 		time.sleep(5)
 		
-		
+		# Twitter doesn't always generate the same password input field, so to determine which XPATH to use first. 
+		# For now: Brute force until the proper XPATH string can be queried by some function. 
+		XPATH1_PW = "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input"
+		XPATH2_PW = "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input"
 		try: 
-			password = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input") 
+			# Add brute force here. 
+			password=self.webDriver.find_element(By.XPATH, XPATH1_PW) 
 		except Exception as err: 
 			self.logger.error("Could not find password field.") 
 			return False 
@@ -129,8 +147,10 @@ class TwitterInterface():
 		password.send_keys(self.password)
 		# Wait a bit until pressing the button, we would not want to appear as bots :). 
 		time.sleep(2)
+		XPATH_PW_CONTINUE_1 = "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div[1]/div/div/div/div"
 		try: 
-			continueButton = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]/div")
+			#continueButton = self.webDriver.find_element(By.XPATH, "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]/div")
+			continueButton = self.webDriver.find_element(By.XPATH, XPATH_PW_CONTINUE_1) 
 		except Exception as err: 
 			self.logger.error("Could not find password continue button.")
 			return False 
@@ -166,7 +186,14 @@ class TwitterInterface():
 	def getFollowingList(): 
 		pass 
 		
+	def saveSession()->bool:
+		try: 
+			pickle.dump(self.webDriver.get_cookies(), open("cookies.pkl", "wb")) 
+		except Exception as err: 
+			return False 
 	
+	def reloadSession()->bool: 
+		pass 
 
 class TwitterSpiderScrapy(): 
     def __init__(self): 

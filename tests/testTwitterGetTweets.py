@@ -4,7 +4,7 @@ from WI.utilities.logger import WILogger
 
 def main(): 
 	twitterInterface = TwitterInterface() 
-	tweetList = twitterInterface.getTweetsOfAccount("elonmusk", 5)
+	tweetList = twitterInterface.getTweetsOfAccount("elonmusk", 50)
 	for tweetDict in tweetList: 
 		print(tweetDict) 
 	return

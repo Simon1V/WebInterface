@@ -37,10 +37,11 @@ def scrapePermalink(permalink: str):
     runner = CrawlerRunner(settings)
 
     # New changes broke the logger, so I disabled it for now
-    # logger = WILogger()
-    # logger.setupConditionalLogger(logFilePath="logs/scrapy.log",debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
-
-    # # Configure logging
+    logger = WILogger()
+    logger.setupConditionalLogger("logger", logFilePath="logs/scrapy.log",debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
+	#logger.setupStandardLogger("logger", logFilePath="logs/scrapy.log",debugLevelConsole=logging.DEBUG)
+    
+	# # Configure logging
     # configure_logging(install_root_handler=False)
     # configure_logging(settings=settings)
 

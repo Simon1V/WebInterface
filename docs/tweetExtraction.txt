@@ -48,4 +48,5 @@ Reasoning: All tweets appear to have this string, but many more elements also ha
 
 nAppearanceOfString('data-testid="tweetText"') + nAppearanceOfString('data-testid="tweetPhoto"')
 might be a reliable indicator for the number of tweets currently loaded. 
+
 To do: Investigate /status/<NUMERICALID> 
