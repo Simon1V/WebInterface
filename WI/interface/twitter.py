@@ -3,6 +3,7 @@ from selenium import webdriver
 from webdriver_manager.firefox import GeckoDriverManager
 from bs4 import BeautifulSoup
 from WI.utilities.logger import WILogger 
+from WI.utilities.filestate import FileState 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
@@ -33,6 +34,7 @@ class TwitterInterface():
 		self.headless = False 
 		self.tweetsList = [] 
 		self.tweetData = dict() 
+		self.fileState = FileState() 
 		
 		options = Options()
 		if headless == True:
@@ -40,23 +42,101 @@ class TwitterInterface():
 		# Passing options is causing trouble currently. 	
 		#self.webDriver = webdriver.Firefox(options=Options, executable_path=GeckoDriverManager().install())		
 		self.webDriver = webdriver.Firefox( executable_path=GeckoDriverManager().install())		
+		self.cookies = 
+	
+	# We should agree on a convention camel case vs underscore! 	
+	def fetch_tweets(self):
+        session = requests.Session()
+        for cookie in self.webDriver.get_cookies():
+            session.cookies.set(cookie['name'], cookie['value'])
+
+        # Now you can use this session to fetch the tweets as you did before
+        # The rest of the code will remain the same as you provided
+
+
+        url_builder = UrlBuilder(self.profile_url)
+
+        guest_token_request = url_builder.get_guest_token()
+        csfr_token = url_builder._get_csrf()
+
+        response = requests.post(guest_token_request["url"], headers=guest_token_request["headers"])
+
+        if response.status_code == 200:
+            guest_token = response.json()["guest_token"]
+            print(f"Guest token: {guest_token}")
+        else:
+            print("Error fetching guest token:", response.status_code, response.text)
+
+
+        url_builder.guest_token = guest_token
+
+
+        # count seems to be able to be set to whataver you want, max I've tested is 100 though
+        variables = {"userId":"44196397","count":100,"includePromotedContent":True,"withQuickPromoteEligibilityTweetFields":True,"withDownvotePerspective":False,"withReactionsMetadata":False,"withReactionsPerspective":False,"withVoice":True,"withV2Timeline":True}
+
+        features = {
+            "blue_business_profile_image_shape_enabled": False,
+            "responsive_web_graphql_exclude_directive_enabled": True,
+            "verified_phone_label_enabled": False,
+            "responsive_web_graphql_timeline_navigation_enabled": True,
+            "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+            "tweetypie_unmention_optimization_enabled": True,
+            "vibe_api_enabled": True,
+            "responsive_web_edit_tweet_api_enabled": True,
+            "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+            "view_counts_everywhere_api_enabled": True,
+            "longform_notetweets_consumption_enabled": True,
+            "tweet_awards_web_tipping_enabled": False,
+            "freedom_of_speech_not_reach_fetch_enabled": False,
+            "standardized_nudges_misinfo": True,
+            "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": False,
+            "interactive_text_enabled": True,
+            "responsive_web_text_conversations_enabled": False,
+            "longform_notetweets_richtext_consumption_enabled": False,
+            "responsive_web_enhance_cards_enabled": False,
+        }
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0",
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.5",
+            "content-type": "application/json",
+            "x-csrf-token": csfr_token,
+            "x-guest-token": guest_token,
+            "x-twitter-client-language": "en",
+            "x-twitter-active-user": "yes",
+            "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+        }
+
+        params = {
+            "variables": variables,
+            "features": features,
+        }
+
+        def get_next_cursor(response_json):
+            for entry in response_json['data']['user']['result']['timeline_v2']['timeline']['instructions']:
+                if 'entries' in entry:
+                    for content_entry in entry['entries']:
+                        content = content_entry['content']
+                        if content['__typename'] == 'TimelineTimelineCursor' and content['cursorType'] == 'Bottom':
+                            return content['value']
+            return None
+
+
+
+        response = requests.get(url, headers=headers, json=params)
+
+        response_json = response.json()
+
+        print(response_json)
+
+
+
+        next_cursor = get_next_cursor(response_json)
+        if next_cursor:
+            variables['cursor'] = next_cursor
 		
-		# See docs/tweetExtraction.txt for reasoning for this approach.  
-	def getTweetsOfAccount(self, accountName:str, nLastTweets:int ) -> list:
-		assert isinstance(accountName, str) and isinstance(nLastTweets, int) and nLastTweets > 0
-        # Get the page source until enough of the page is visible for nLastTweets to be extracted. 
-        # There is very likely a better way to get the number of currently loaded tweets. 
-		twitterAccountURL = TWITTER_BASE + accountName
-		pageSource = self.getPageSource(twitterAccountURL, nLastTweets)
-		print(pageSource)
-		return 
-		for i in range(0, nLastTweets): 
-			pass 
-		return self.tweetsList
-
-	def getTweetsWithRepliesAccount(self, accountName:str, nLastTweets:int) -> list: 
-		pass 
-
+		
     # for possible future direct multimodal evaluation of tweet. 
 	def getTweetScreenshots(self, accountName:str, nLastTweets:int) -> list: 
 		pass 
@@ -74,25 +154,6 @@ class TwitterInterface():
 			return False 
 		return True 
     
-	def getPageSource(self, url:str,nLastTweets:int ) -> str: 
-		self.webDriver.get(url)
-		
-		htmlSource = ""
-		enoughDataAvailable=False 
-		
-		while(enoughDataAvailable == False): 
-			htmlSource = self.webDriver.execute_script("return document.documentElement.outerHTML")
-			time.sleep(10)
-			tweetCount = self.getNumberOfContainedTweets(htmlSource)
-			if (nLastTweets >= tweetCount): 
-				#load more of the page.  
-				self.webDriver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-				continue 
-			# In case we are done or nLastTweets< tweetCount, terminate loop.
-			enoughDataAvailable = True         
-		#soup = BeautifulSoup(self.webDriver.page_source, features="lxml")
-		#return str(soup.encode('utf-8'))
-		return htmlSource
 		
 	# Debugging function. Thx GPT, this works better. 
 	def getPageSourceDbg(self, url:str) -> str: 
@@ -101,13 +162,7 @@ class TwitterInterface():
 		htmlSource = self.webDriver.execute_script("return document.documentElement.outerHTML")
 		return htmlSource
 		
-	def getNumberOfContainedTweets(self, htmlSource:str) -> int: 
-		s1 = r'data-testid="tweetText"'
-		s2 = r'data-testid="tweetPhoto"'
-		nTweets = htmlSource.count(s1) + htmlSource.count(s2) 
-		print(nTweets) 
-		#assert nTweets > 0 
-		return nTweets 
+
 	
 	def login(self)->bool:
 		assert isinstance(self.username, str) and self.username != "" 
@@ -191,11 +246,60 @@ class TwitterInterface():
 			pickle.dump(self.webDriver.get_cookies(), open("cookies.pkl", "wb")) 
 		except Exception as err: 
 			return False 
-	
+			
+			
+	#Fix always returns true.
 	def reloadSession()->bool: 
-		pass 
+		cookies = pickle.load(open("cookies.pkl", "rb"))
+		for cookie in cookies:
+			driver.add_cookie(cookie)
+		return true 
 
 class TwitterSpiderScrapy(): 
     def __init__(self): 
         pass 
 
+
+'''# See docs/tweetExtraction.txt for reasoning for this approach.  
+	def getTweetsOfAccount(self, accountName:str, nLastTweets:int ) -> list:
+		assert isinstance(accountName, str) and isinstance(nLastTweets, int) and nLastTweets > 0
+        # Get the page source until enough of the page is visible for nLastTweets to be extracted. 
+        # There is very likely a better way to get the number of currently loaded tweets. 
+		twitterAccountURL = TWITTER_BASE + accountName
+		pageSource = self.getPageSource(twitterAccountURL, nLastTweets)
+		print(pageSource)
+		return 
+		for i in range(0, nLastTweets): 
+			pass 
+		return self.tweetsList
+
+	def getTweetsWithRepliesAccount(self, accountName:str, nLastTweets:int) -> list: 
+		pass 
+		
+	def getNumberOfContainedTweets(self, htmlSource:str) -> int: 
+		s1 = r'data-testid="tweetText"'
+		s2 = r'data-testid="tweetPhoto"'
+		nTweets = htmlSource.count(s1) + htmlSource.count(s2) 
+		print(nTweets) 
+		#assert nTweets > 0 
+		return nTweets 	
+		
+	def getPageSource(self, url:str,nLastTweets:int ) -> str: 
+		self.webDriver.get(url)
+		
+		htmlSource = ""
+		enoughDataAvailable=False 
+		
+		while(enoughDataAvailable == False): 
+			htmlSource = self.webDriver.execute_script("return document.documentElement.outerHTML")
+			time.sleep(10)
+			tweetCount = self.getNumberOfContainedTweets(htmlSource)
+			if (nLastTweets >= tweetCount): 
+				#load more of the page.  
+				self.webDriver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+				continue 
+			# In case we are done or nLastTweets< tweetCount, terminate loop.
+			enoughDataAvailable = True         
+		#soup = BeautifulSoup(self.webDriver.page_source, features="lxml")
+		#return str(soup.encode('utf-8'))
+		return htmlSource'''
