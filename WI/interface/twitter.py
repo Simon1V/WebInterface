@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from webdriver_manager.firefox import GeckoDriverManager
-from bs4 import BeautifulSoup
-from WI.utilities.logger import WILogger 
-from WI.utilities.filestate import FileState 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
-#from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.firefox.options import Options
+from WI.utilities.logger import WILogger 
+from WI.utilities.filestate import FileState 
 import os
 import time 
 import logging 
@@ -49,9 +48,6 @@ class TwitterInterface():
         session = requests.Session()
         for cookie in self.webDriver.get_cookies():
             session.cookies.set(cookie['name'], cookie['value'])
-
-        # Now you can use this session to fetch the tweets as you did before
-        # The rest of the code will remain the same as you provided
 
 
         url_builder = UrlBuilder(self.profile_url)
@@ -135,11 +131,6 @@ class TwitterInterface():
         next_cursor = get_next_cursor(response_json)
         if next_cursor:
             variables['cursor'] = next_cursor
-		
-		
-    # for possible future direct multimodal evaluation of tweet. 
-	def getTweetScreenshots(self, accountName:str, nLastTweets:int) -> list: 
-		pass 
 
     # Some tweetURLs require to be logged in (example: visibility only for followers), ignore for now. 
 	def getTweetScreenshotByURL(self, tweetURL:str) -> bool : 
@@ -254,52 +245,3 @@ class TwitterInterface():
 		for cookie in cookies:
 			driver.add_cookie(cookie)
 		return true 
-
-class TwitterSpiderScrapy(): 
-    def __init__(self): 
-        pass 
-
-
-'''# See docs/tweetExtraction.txt for reasoning for this approach.  
-	def getTweetsOfAccount(self, accountName:str, nLastTweets:int ) -> list:
-		assert isinstance(accountName, str) and isinstance(nLastTweets, int) and nLastTweets > 0
-        # Get the page source until enough of the page is visible for nLastTweets to be extracted. 
-        # There is very likely a better way to get the number of currently loaded tweets. 
-		twitterAccountURL = TWITTER_BASE + accountName
-		pageSource = self.getPageSource(twitterAccountURL, nLastTweets)
-		print(pageSource)
-		return 
-		for i in range(0, nLastTweets): 
-			pass 
-		return self.tweetsList
-
-	def getTweetsWithRepliesAccount(self, accountName:str, nLastTweets:int) -> list: 
-		pass 
-		
-	def getNumberOfContainedTweets(self, htmlSource:str) -> int: 
-		s1 = r'data-testid="tweetText"'
-		s2 = r'data-testid="tweetPhoto"'
-		nTweets = htmlSource.count(s1) + htmlSource.count(s2) 
-		print(nTweets) 
-		#assert nTweets > 0 
-		return nTweets 	
-		
-	def getPageSource(self, url:str,nLastTweets:int ) -> str: 
-		self.webDriver.get(url)
-		
-		htmlSource = ""
-		enoughDataAvailable=False 
-		
-		while(enoughDataAvailable == False): 
-			htmlSource = self.webDriver.execute_script("return document.documentElement.outerHTML")
-			time.sleep(10)
-			tweetCount = self.getNumberOfContainedTweets(htmlSource)
-			if (nLastTweets >= tweetCount): 
-				#load more of the page.  
-				self.webDriver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-				continue 
-			# In case we are done or nLastTweets< tweetCount, terminate loop.
-			enoughDataAvailable = True         
-		#soup = BeautifulSoup(self.webDriver.page_source, features="lxml")
-		#return str(soup.encode('utf-8'))
-		return htmlSource'''

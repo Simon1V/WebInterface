@@ -30,10 +30,11 @@ async def run_snopes(search_term):
     return response
 	
 
-@app.get("/twitter/{params}")
+@app.get("/twitter")
 def readRoot():
     return {"Hello": "World"}
 	
+
 	
 def getTweetsOfAccount(): 
 	pass 
@@ -59,14 +60,12 @@ async def scrapePermalink(permalink: str):
 
     return {"Scraped": scraped_data}
 
-
-
-
 @app.get("/snopes")
 async def scrapeSnopes(search_term: str):
     print(search_term)
     response = await run_snopes(search_term)
     return response
+
 
 if __name__ == "__main__":
 	os.system('python -m spacy download en_core_web_sm')
@@ -83,4 +82,4 @@ if __name__ == "__main__":
 
 	# Create a queue to store the scraped data
 	scraped_data_queue = Queue() 
-	uvicorn.run(app, host="0.0.0.0", port=8000)
+	uvicorn.run(app, host="127.0.0.1", port=8000)
