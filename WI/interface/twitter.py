@@ -20,10 +20,10 @@ from urllib.parse import urlencode
 from functools import wraps
 
 
-# Harvest Twitter data :) 
-# Twitter is slighty tougher on the bots but can't defeat Selenium. 
-
 TWITTER_BASE = 'https://www.twitter.com/'
+TWITTER_URL_API = "https://twitter.com/i/api/graphql/BeHK76TOCY3P8nO-FWocjA/UserTweets"
+REQUEST_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'
+REQUEST_PLATFORMS = ['Linux', 'Windows']
 
 class TwitterInterface():
 	def __init__(self,username:str="", password:str="", headless:bool=False): 
@@ -449,6 +449,12 @@ class UrlBuilder:
 		}
 		return self._build(self.URL_TWEET_DETAILS, urlencode(params))
 
+def return_with_headers(func):
+    @wraps(func)
+    def wrapper(self, *arg, **kw):
+        url = func(self, *arg, **kw)
+        return dict(headers=self._get_headers(), url=TWITTER_URL_API)
+
+    return wrapper
 
 
-url = "https://twitter.com/i/api/graphql/BeHK76TOCY3P8nO-FWocjA/UserTweets"

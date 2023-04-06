@@ -13,6 +13,8 @@ from WI.utilities.logger import WILogger
 from WI.utilities.filestate import FileState
 from WI.interface.reddit import RedditScraper
 from WI.interface.snopes import SnopesScraper
+from WI.utilities.credentials import Credentials 
+from WI.interfaces.twitter import TwitterInterface
 
 import json
 import os
@@ -36,12 +38,15 @@ def hello():
 
 @app.get("/twitter")
 def readRoot():
-	web_driver = webdriver.Firefox( executable_path=GeckoDriverManager().install())	
 	logger = logging.getLogger(__name__)
+	credentials = Credentials(pw=None) 
+	username, password = credentials.getCredentials("twitter", ["username", "password"])
+	logger.debug("Got credentials.")
+	web_driver = webdriver.Firefox( executable_path=GeckoDriverManager().install())	
 	# Example:
-	twitter_bot = TwitterBot(profile_url, username, password, web_driver, logger)
-	twitter_bot.login()
-	twitter_bot.fetch_tweets()
+	twitterInterface = TwitterInterface(profile_url, username, password, web_driver, logger)
+	twitterInterface.login()
+	twitterInterface.fetch_tweets()
 
 
 
