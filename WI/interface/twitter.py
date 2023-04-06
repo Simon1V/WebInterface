@@ -265,6 +265,14 @@ class UrlBuilder:
 		self.username = profile_url.split("/")[-1] if profile_url else None
 		self.user_id = None
 		self.guest_token = None
+	
+	def return_with_headers(func):
+		@wraps(func)
+		def wrapper(self, *arg, **kw):
+			url = func(self, *arg, **kw)
+			return dict(headers=self._get_headers(), url=TWITTER_URL_API)
+		return wrapper
+
 
 	def _get_headers(self):
 		headers = {
@@ -449,12 +457,5 @@ class UrlBuilder:
 		}
 		return self._build(self.URL_TWEET_DETAILS, urlencode(params))
 
-def return_with_headers(func):
-    @wraps(func)
-    def wrapper(self, *arg, **kw):
-        url = func(self, *arg, **kw)
-        return dict(headers=self._get_headers(), url=TWITTER_URL_API)
-
-    return wrapper
 
 

@@ -14,7 +14,7 @@ from WI.utilities.filestate import FileState
 from WI.interface.reddit import RedditScraper
 from WI.interface.snopes import SnopesScraper
 from WI.utilities.credentials import Credentials 
-from WI.interfaces.twitter import TwitterInterface
+from WI.interface.twitter import TwitterInterface
 
 import json
 import os
@@ -22,19 +22,12 @@ import os
 app = FastAPI()
 fileState = FileState() 
 wiLogger = WILogger()
-
-
-
-async def run_snopes(search_term):
-    scraper = SnopesScraper()
-
-    response = await scraper.search_snopes(search_term)
-    return response
 	
 
-@app.get("/serverhello")
+@app.get("/")
 def hello(): 
 	return {"message": "Hello universe."}
+
 
 @app.get("/twitter")
 def readRoot():
@@ -42,12 +35,11 @@ def readRoot():
 	credentials = Credentials(pw=None) 
 	username, password = credentials.getCredentials("twitter", ["username", "password"])
 	logger.debug("Got credentials.")
-	web_driver = webdriver.Firefox( executable_path=GeckoDriverManager().install())	
 	# Example:
-	twitterInterface = TwitterInterface(profile_url, username, password, web_driver, logger)
+	twitterInterface = TwitterInterface(username, password)
 	twitterInterface.login()
+	return 
 	twitterInterface.fetch_tweets()
-
 
 
 @app.get("/reddit")
@@ -69,6 +61,7 @@ async def scrapePermalink(permalink: str):
 
     return {"Scraped": scraped_data}
 
+
 @app.get("/snopes")
 async def scrapeSnopes(search_term: str):
     print(search_term)
@@ -76,6 +69,13 @@ async def scrapeSnopes(search_term: str):
     return response
 
 
+async def run_snopes(search_term):
+    scraper = SnopesScraper()
+
+    response = await scraper.search_snopes(search_term)
+    return response
+
+	
 if __name__ == "__main__":
 	os.system('python -m spacy download en_core_web_sm')
 	
