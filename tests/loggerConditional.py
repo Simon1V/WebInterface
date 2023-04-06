@@ -12,6 +12,6 @@ def main():
 	scrapperLogger.warning("This is a logger test at warning level")
 	scrapperLogger.error("This is a logger test at error level")
 	scrapperLogger.critical("This is a logger test at critical level")
-    
+	
 if __name__ == '__main__': 
-    main() 
+	main() 

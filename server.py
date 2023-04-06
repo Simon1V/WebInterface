@@ -30,19 +30,23 @@ async def run_snopes(search_term):
     return response
 	
 
+@app.get("/serverhello")
+def hello(): 
+	return {"message": "Hello universe."}
+
 @app.get("/twitter")
 def readRoot():
-    return {"Hello": "World"}
-	
+	web_driver = webdriver.Firefox( executable_path=GeckoDriverManager().install())	
+	logger = logging.getLogger(__name__)
+	# Example:
+	twitter_bot = TwitterBot(profile_url, username, password, web_driver, logger)
+	twitter_bot.login()
+	twitter_bot.fetch_tweets()
 
-	
-def getTweetsOfAccount(): 
-	pass 
 
 
 @app.get("/reddit")
 async def scrapePermalink(permalink: str):
-
     runner = RedditScraper(permalink=permalink, scraped_data_queue=scraped_data_queue)
 
 
@@ -73,11 +77,8 @@ if __name__ == "__main__":
 	with open(fileState.SCRAPY_SETTINGS_FILE, "r") as f:
 		settings = json.load(f)
 	
-	
-	logger = wiLogger.setupConditionalLogger(logFilePath=fileState.LOG_FILE, debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
-		
+	logger = wiLogger.setupConditionalLogger(logFilePath=fileState.LOG_FILE, debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)	
 	logger.debug("Current settings: " + str(settings))
-
 	setup()
 
 	# Create a queue to store the scraped data

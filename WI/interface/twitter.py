@@ -41,98 +41,98 @@ class TwitterInterface():
 		# Passing options is causing trouble currently. 	
 		#self.webDriver = webdriver.Firefox(options=Options, executable_path=GeckoDriverManager().install())		
 		self.webDriver = webdriver.Firefox( executable_path=GeckoDriverManager().install())		
-		self.cookies = 
+		#self.cookies = 
 	
 	# We should agree on a convention camel case vs underscore! 	
 	def fetch_tweets(self):
-        session = requests.Session()
-        for cookie in self.webDriver.get_cookies():
-            session.cookies.set(cookie['name'], cookie['value'])
+		session = requests.Session()
+		for cookie in self.webDriver.get_cookies():
+			session.cookies.set(cookie['name'], cookie['value'])
 
 
-        url_builder = UrlBuilder(self.profile_url)
+		url_builder = UrlBuilder(self.profile_url)
 
-        guest_token_request = url_builder.get_guest_token()
-        csfr_token = url_builder._get_csrf()
+		guest_token_request = url_builder.get_guest_token()
+		csfr_token = url_builder._get_csrf()
 
-        response = requests.post(guest_token_request["url"], headers=guest_token_request["headers"])
+		response = requests.post(guest_token_request["url"], headers=guest_token_request["headers"])
 
-        if response.status_code == 200:
-            guest_token = response.json()["guest_token"]
-            print(f"Guest token: {guest_token}")
-        else:
-            print("Error fetching guest token:", response.status_code, response.text)
-
-
-        url_builder.guest_token = guest_token
+		if response.status_code == 200:
+			guest_token = response.json()["guest_token"]
+			print(f"Guest token: {guest_token}")
+		else:
+			print("Error fetching guest token:", response.status_code, response.text)
 
 
-        # count seems to be able to be set to whataver you want, max I've tested is 100 though
-        variables = {"userId":"44196397","count":100,"includePromotedContent":True,"withQuickPromoteEligibilityTweetFields":True,"withDownvotePerspective":False,"withReactionsMetadata":False,"withReactionsPerspective":False,"withVoice":True,"withV2Timeline":True}
-
-        features = {
-            "blue_business_profile_image_shape_enabled": False,
-            "responsive_web_graphql_exclude_directive_enabled": True,
-            "verified_phone_label_enabled": False,
-            "responsive_web_graphql_timeline_navigation_enabled": True,
-            "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
-            "tweetypie_unmention_optimization_enabled": True,
-            "vibe_api_enabled": True,
-            "responsive_web_edit_tweet_api_enabled": True,
-            "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
-            "view_counts_everywhere_api_enabled": True,
-            "longform_notetweets_consumption_enabled": True,
-            "tweet_awards_web_tipping_enabled": False,
-            "freedom_of_speech_not_reach_fetch_enabled": False,
-            "standardized_nudges_misinfo": True,
-            "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": False,
-            "interactive_text_enabled": True,
-            "responsive_web_text_conversations_enabled": False,
-            "longform_notetweets_richtext_consumption_enabled": False,
-            "responsive_web_enhance_cards_enabled": False,
-        }
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0",
-            "Accept": "*/*",
-            "Accept-Language": "en-US,en;q=0.5",
-            "content-type": "application/json",
-            "x-csrf-token": csfr_token,
-            "x-guest-token": guest_token,
-            "x-twitter-client-language": "en",
-            "x-twitter-active-user": "yes",
-            "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-        }
-
-        params = {
-            "variables": variables,
-            "features": features,
-        }
-
-        def get_next_cursor(response_json):
-            for entry in response_json['data']['user']['result']['timeline_v2']['timeline']['instructions']:
-                if 'entries' in entry:
-                    for content_entry in entry['entries']:
-                        content = content_entry['content']
-                        if content['__typename'] == 'TimelineTimelineCursor' and content['cursorType'] == 'Bottom':
-                            return content['value']
-            return None
+		url_builder.guest_token = guest_token
 
 
+		# count seems to be able to be set to whataver you want, max I've tested is 100 though
+		variables = {"userId":"44196397","count":100,"includePromotedContent":True,"withQuickPromoteEligibilityTweetFields":True,"withDownvotePerspective":False,"withReactionsMetadata":False,"withReactionsPerspective":False,"withVoice":True,"withV2Timeline":True}
 
-        response = requests.get(url, headers=headers, json=params)
+		features = {
+			"blue_business_profile_image_shape_enabled": False,
+			"responsive_web_graphql_exclude_directive_enabled": True,
+			"verified_phone_label_enabled": False,
+			"responsive_web_graphql_timeline_navigation_enabled": True,
+			"responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+			"tweetypie_unmention_optimization_enabled": True,
+			"vibe_api_enabled": True,
+			"responsive_web_edit_tweet_api_enabled": True,
+			"graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+			"view_counts_everywhere_api_enabled": True,
+			"longform_notetweets_consumption_enabled": True,
+			"tweet_awards_web_tipping_enabled": False,
+			"freedom_of_speech_not_reach_fetch_enabled": False,
+			"standardized_nudges_misinfo": True,
+			"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": False,
+			"interactive_text_enabled": True,
+			"responsive_web_text_conversations_enabled": False,
+			"longform_notetweets_richtext_consumption_enabled": False,
+			"responsive_web_enhance_cards_enabled": False,
+		}
 
-        response_json = response.json()
+		headers = {
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0",
+			"Accept": "*/*",
+			"Accept-Language": "en-US,en;q=0.5",
+			"content-type": "application/json",
+			"x-csrf-token": csfr_token,
+			"x-guest-token": guest_token,
+			"x-twitter-client-language": "en",
+			"x-twitter-active-user": "yes",
+			"authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+		}
 
-        print(response_json)
+		params = {
+			"variables": variables,
+			"features": features,
+		}
+
+		def get_next_cursor(response_json):
+			for entry in response_json['data']['user']['result']['timeline_v2']['timeline']['instructions']:
+				if 'entries' in entry:
+					for content_entry in entry['entries']:
+						content = content_entry['content']
+						if content['__typename'] == 'TimelineTimelineCursor' and content['cursorType'] == 'Bottom':
+							return content['value']
+			return None
 
 
 
-        next_cursor = get_next_cursor(response_json)
-        if next_cursor:
-            variables['cursor'] = next_cursor
+		response = requests.get(url, headers=headers, json=params)
 
-    # Some tweetURLs require to be logged in (example: visibility only for followers), ignore for now. 
+		response_json = response.json()
+
+		print(response_json)
+
+
+
+		next_cursor = get_next_cursor(response_json)
+		if next_cursor:
+			variables['cursor'] = next_cursor
+
+	# Some tweetURLs require to be logged in (example: visibility only for followers), ignore for now. 
 	def getTweetScreenshotByURL(self, tweetURL:str) -> bool : 
 		assert isinstance(tweetURL, str)
 		now = datetime.now() 
@@ -144,7 +144,7 @@ class TwitterInterface():
 		except Exception as err: 
 			return False 
 		return True 
-    
+	
 		
 	# Debugging function. Thx GPT, this works better. 
 	def getPageSourceDbg(self, url:str) -> str: 
