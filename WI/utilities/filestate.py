@@ -7,7 +7,6 @@ DEFAULT_LOGS_DIRECTORY_NAME = 'logs'
 
 DEFAULT_LOGS_FILE_NAME = 'scan.txt'
 DEFAULT_CREDENTIALS_FILE_NAME = 'credentials.json'
-DEFAULT_SCRAPY_SETTINGS_FILE_NAME = 'scrapy_settings.json'
 
 class FileState: 
 	def __init__(self):
@@ -18,7 +17,6 @@ class FileState:
 		self.LOG_DIRECTORY = os.path.join(self.BASE_DIRECTORY, DEFAULT_LOGS_DIRECTORY_NAME) 
 		self.LOG_FILE = os.path.join(self.LOG_DIRECTORY, DEFAULT_LOGS_FILE_NAME)
 		self.CREDENTIALS_FILE = os.path.join(self.CONFIG_DIRECTORY, DEFAULT_CREDENTIALS_FILE_NAME)
-		self.SCRAPY_SETTINGS_FILE = os.path.join(self.CONFIG_DIRECTORY, DEFAULT_SCRAPY_SETTINGS_FILE_NAME)
 	
 	def printDirs(self)-> None: 
 		print('File State in: ', self.THIS_DIRECTORY)

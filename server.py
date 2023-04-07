@@ -16,13 +16,13 @@ from WI.interface.snopes import SnopesScraper
 from WI.utilities.credentials import Credentials 
 from WI.interface.twitter import TwitterInterface
 
-import json
-import os
+
 
 app = FastAPI()
 fileState = FileState() 
 wiLogger = WILogger()
-	
+reddit_logger = wiLogger.setupConditionalLogger(logFilePath='logs/reddit.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)	
+snopes_logger = wiLogger.setupConditionalLogger(logFilePath='logs/snopes.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
 
 @app.get("/")
 def hello(): 
@@ -42,9 +42,35 @@ def readRoot():
 	twitterInterface.fetch_tweets()
 
 
+
+async def run_snopes(search_term):
+    scraper = SnopesScraper(snopes_logger)
+    response = await scraper.search_snopes(search_term)
+    return response
+
+
+setup()
+
+# Create a queue to store the scraped data
+scraped_data_queue = Queue()
+
+app = FastAPI() 
+
+@app.get("/twitter/{params}")
+def readRoot():
+    return {"Hello": "World"}
+	
+	
+def getTweetsOfAccount(): 
+	pass 
+
+
+
 @app.get("/reddit")
 async def scrapePermalink(permalink: str):
-    runner = RedditScraper(permalink=permalink, scraped_data_queue=scraped_data_queue)
+
+
+    runner = RedditScraper(permalink=permalink, scraped_data_queue=scraped_data_queue, logger=reddit_logger)
 
 
     @wait_for(timeout=300)  # Timeout in seconds
@@ -59,7 +85,9 @@ async def scrapePermalink(permalink: str):
     scraped_data = scraped_data_queue.get()
 
 
-    return {"Scraped": scraped_data}
+    return scraped_data
+
+
 
 
 @app.get("/snopes")
@@ -69,21 +97,11 @@ async def scrapeSnopes(search_term: str):
     return response
 
 
-async def run_snopes(search_term):
-    scraper = SnopesScraper()
-
-    response = await scraper.search_snopes(search_term)
-    return response
-
 	
 if __name__ == "__main__":
-	os.system('python -m spacy download en_core_web_sm')
-	
-	with open(fileState.SCRAPY_SETTINGS_FILE, "r") as f:
-		settings = json.load(f)
+
 	
 	logger = wiLogger.setupConditionalLogger(logFilePath=fileState.LOG_FILE, debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)	
-	logger.debug("Current settings: " + str(settings))
 	setup()
 
 	# Create a queue to store the scraped data
