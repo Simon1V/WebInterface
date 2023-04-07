@@ -1,14 +1,20 @@
 import requests
 from scrapy.selector import Selector
 from queue import Queue
- 
+import logging
+
+
+
 class RedditScraper:
-    def __init__(self, permalink=None, scraped_data_queue=None):
+    def __init__(self, permalink=None, scraped_data_queue=None, logger=None):
         self.permalink = permalink
         self.scraped_data_queue = scraped_data_queue if scraped_data_queue else Queue()
+        self.logger = logger if logger else logging.getLogger(__name__)
+        # change log directory
+        self.logger.info("RedditScraper initialized.")
 
 
-    def age_check(self):
+    def __age_check(self):
         url = "https://old.reddit.com/over18"
         querystring = {"dest": self.permalink}
         payload = "over18=yes"
@@ -27,6 +33,7 @@ class RedditScraper:
         return response
 
     def parse_post(self, response_text):
+        self.logger.info("Starting to parse the post.")
         sel = Selector(text=response_text)
 
         post_content = ''.join(sel.xpath('/html/body/div[4]/div[1]/div[1]/div[2]/div[2]/form/div/div//text()').extract()).strip()
@@ -47,17 +54,18 @@ class RedditScraper:
             "subreddit": subreddit,
             "date": date
         }
-
+        self.logger.info(f"Parsed post: {item}")
         self.scraped_data_queue.put(item)
         return item
 
     def run(self):
-        age_check_response = self.age_check()
+        age_check_response = self.__age_check()
         if age_check_response.url.startswith('https://old.reddit.com/'):
-            print('Successfully passed the age check.')
-            post_data = self.parse_post(age_check_response.text)
-            print(post_data)
+            self.logger.debug('Passed the age check.')
+            self.parse_post(age_check_response.text)
+
         else:
-            print('Failed to pass the age check.')
+            self.logger.error('Age check failed.')
+            return None
 
 
