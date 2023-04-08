@@ -7,6 +7,7 @@ DEFAULT_LOGS_DIRECTORY_NAME = 'logs'
 
 DEFAULT_LOGS_FILE_NAME = 'scan.txt'
 DEFAULT_CREDENTIALS_FILE_NAME = 'credentials.json'
+DEFAULT_TWITTER_COOKIE_FILE_NAME = 'cookies.pkl'
 
 class FileState: 
 	def __init__(self):
@@ -17,6 +18,7 @@ class FileState:
 		self.LOG_DIRECTORY = os.path.join(self.BASE_DIRECTORY, DEFAULT_LOGS_DIRECTORY_NAME) 
 		self.LOG_FILE = os.path.join(self.LOG_DIRECTORY, DEFAULT_LOGS_FILE_NAME)
 		self.CREDENTIALS_FILE = os.path.join(self.CONFIG_DIRECTORY, DEFAULT_CREDENTIALS_FILE_NAME)
+		self.TWITTER_COOKIES_FILE = os.path.join(self.CONFIG_DIRECTORY, DEFAULT_TWITTER_COOKIE_FILE_NAME)
 	
 	def printDirs(self)-> None: 
 		print('File State in: ', self.THIS_DIRECTORY)

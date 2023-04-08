@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 from selenium import webdriver
 from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.common.by import By
@@ -19,8 +19,8 @@ import string
 from urllib.parse import urlencode
 from functools import wraps
 
-
 TWITTER_BASE = 'https://www.twitter.com/'
+TWITTER_BASE_EXPLORE = 'https://www.twitter.com/explore'
 TWITTER_URL_API = "https://twitter.com/i/api/graphql/BeHK76TOCY3P8nO-FWocjA/UserTweets"
 REQUEST_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'
 REQUEST_PLATFORMS = ['Linux', 'Windows']
@@ -33,6 +33,7 @@ class TwitterInterface():
 		
 		# Get currently initialized custom logger.
 		self.logger = logging.getLogger()
+		
 		#State vars. 
 		self.loggedIn = False 
 		self.headless = False 
@@ -46,30 +47,29 @@ class TwitterInterface():
 		# Passing options is causing trouble currently. 	
 		#self.webDriver = webdriver.Firefox(options=Options, executable_path=GeckoDriverManager().install())		
 		self.webDriver = webdriver.Firefox( executable_path=GeckoDriverManager().install())		
-		#self.cookies = 
 	
 	# We should agree on a convention camel case vs underscore! 	
-	def fetch_tweets(self):
+	def fetchTweets(self):
 		session = requests.Session()
 		for cookie in self.webDriver.get_cookies():
 			session.cookies.set(cookie['name'], cookie['value'])
 
 
-		url_builder = UrlBuilder(self.profile_url)
+		urlBuilder = UrlBuilder(self.profile_url)
 
-		guest_token_request = url_builder.get_guest_token()
-		csfr_token = url_builder._get_csrf()
+		guestToken_request = urlBuilder.get_guestToken()
+		csrfToken = urlBuilder._get_csrf()
 
-		response = requests.post(guest_token_request["url"], headers=guest_token_request["headers"])
+		response = requests.post(guestToken_request["url"], headers=guestToken_request["headers"])
 
 		if response.status_code == 200:
-			guest_token = response.json()["guest_token"]
-			print(f"Guest token: {guest_token}")
+			guestToken = response.json()["guestToken"]
+			print(f"Guest token: {guestToken}")
 		else:
 			print("Error fetching guest token:", response.status_code, response.text)
 
 
-		url_builder.guest_token = guest_token
+		urlBuilder.guestToken = guestToken
 
 
 		# count seems to be able to be set to whataver you want, max I've tested is 100 though
@@ -102,8 +102,8 @@ class TwitterInterface():
 			"Accept": "*/*",
 			"Accept-Language": "en-US,en;q=0.5",
 			"content-type": "application/json",
-			"x-csrf-token": csfr_token,
-			"x-guest-token": guest_token,
+			"x-csrf-token": csrfToken,
+			"x-guest-token": guestToken,
 			"x-twitter-client-language": "en",
 			"x-twitter-active-user": "yes",
 			"authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
@@ -167,7 +167,6 @@ class TwitterInterface():
 		time.sleep(5)
 		
 		try: 
-			#username = self.webDriver.find_element(By.XPATH,"/html/body/div/div/div/div[1]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input")
 			username = self.webDriver.find_element(By.XPATH, "/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input")
 		except Exception as err: 
 			self.logger.error("Could not find username input field.")
@@ -181,16 +180,16 @@ class TwitterInterface():
 		except Exception as err: 
 			self.logger.error("Could not find username/email continue button.") 
 			return False 
-		self.webDriver.execute_script("arguments[0].click();", continueButton);
+		self.webDriver.execute_script("arguments[0].click();", continueButton)
 		time.sleep(5)
 		
 		# Twitter doesn't always generate the same password input field, so to determine which XPATH to use first. 
 		# For now: Brute force until the proper XPATH string can be queried by some function. 
-		XPATH1_PW = "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input"
-		XPATH2_PW = "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input"
+		#XPATH1_PW = "/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input"
+		#XPATH2_PW = 		"/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input"
 		try: 
 			# Add brute force here. 
-			password=self.webDriver.find_element(By.XPATH, XPATH1_PW) 
+			password=webDriver.find_element(By.XPATH, XPATH1_PW) 
 		except Exception as err: 
 			self.logger.error("Could not find password field.") 
 			return False 
@@ -213,13 +212,21 @@ class TwitterInterface():
 
 	def tweet(self, message:str, picture:None) -> bool: 
 		assert self.loggedIn == True and isinstance(message, str)  
+		XPATH_TWEET_BUTTON = "/html/body/div[1]/div/div/div[2]/header/div/div/div/div[1]/div[3]/a/div"
+		XPATH_TWEET_INPUT = "/html/body/div[1]/div/div/div[1]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div[2]/div[1]/div/div/div/div/div[2]/div[1]/div/div/div/div/div/div[2]/div/div/div/div/label/div[1]/div/div/div/div/div/div[2]/div/div/div/div"
+		try: 	
+			tweetButton = self.webDriver.find_element(By.XPATH, XPATH_TWEET_BUTTON) 
+		except Exception as err: 
+			self.logger.error("Could not find tweet button.")
+			return False 
+		
 		return True  
 			
 	def retweet(self, messageURL:str) -> bool:
 		assert self.loggedIn == True and isinstance(messageURL, str)  
 		return True  
 		
-	def like(self,messageURL:str) -> bool: 
+	def like(self, messageURL:str) -> bool: 
 		assert self.loggedIn == True and isinstance(messageURL, str)  
 		return True  
 		
@@ -231,28 +238,34 @@ class TwitterInterface():
 		assert self.loggedIn == True and isinstance(accountName, str)
 		return True 
 	
-	def getFollowerList(): 
+	def getFollowerList(self): 
 		pass 
 	
-	def getFollowingList(): 
+	def getFollowingList(self): 
 		pass 
-		
-	def saveSession()->bool:
+	
+	# Session Management. 	
+	def saveSession(self)->bool:
 		try: 
-			pickle.dump(self.webDriver.get_cookies(), open("cookies.pkl", "wb")) 
+			pickle.dump(self.webDriver.get_cookies(), open(self.fileState.DEFAULT_TWITTER_COOKIES_FILE, "wb")) 
 		except Exception as err: 
 			return False 
 			
 			
-	#Fix always returns true.
-	def reloadSession()->bool: 
-		cookies = pickle.load(open("cookies.pkl", "rb"))
+	def reloadSession(self)->bool: 
+		try: 
+			self.webDriver.get(TWITTER_BASE_EXPLORE) 
+		except Exception as err: 
+			self.logger.error("Could not reload session due to " + err)
+			return False 
+		time.sleep(5)
+		cookies = pickle.load(open(self.fileState.TWITTER_COOKIES_FILE, "rb"))
 		for cookie in cookies:
-			driver.add_cookie(cookie)
-		return true 
+			self.webDriver.add_cookie(cookie)
+		return True 
 
 class UrlBuilder:
-	URL_GUEST_TOKEN = "https://api.twitter.com/1.1/guest/activate.json"
+	URL_guestToken = "https://api.twitter.com/1.1/guest/activate.json"
 	URL_API_INIT = "https://twitter.com/i/api/1.1/branch/init.json"
 	URL_USER_BY_SCREEN_NAME = "https://api.twitter.com/graphql/rePnxwe9LZ51nQ7Sn_xN_A/UserByScreenName"
 	URL_USER_TWEETS = "https://twitter.com/i/api/graphql/OXXUyHfKYZ-xLx4NcL9-_Q/UserTweets"
@@ -264,7 +277,7 @@ class UrlBuilder:
 	def __init__(self, profile_url):
 		self.username = profile_url.split("/")[-1] if profile_url else None
 		self.user_id = None
-		self.guest_token = None
+		self.guestToken = None
 	
 	def return_with_headers(func):
 		@wraps(func)
@@ -294,11 +307,11 @@ class UrlBuilder:
 			'x-twitter-client-language': 'en',
 		}
 
-		if self.guest_token:
+		if self.guestToken:
 			headers['content-type'] = 'application/json'
 			headers['referer'] = f'https://twitter.com/{self.username}'
 			headers['sec-fetch-site'] = 'same-origin'
-			headers['x-guest-token'] = self.guest_token
+			headers['x-guest-token'] = self.guestToken
 
 		return headers
 
@@ -311,8 +324,8 @@ class UrlBuilder:
 		return "?".join([url, params])
 
 	@return_with_headers
-	def get_guest_token(self):
-		return self.URL_GUEST_TOKEN
+	def get_guestToken(self):
+		return self.URL_guestToken
 
 	@return_with_headers
 	def init_api(self):
