@@ -1,0 +1,6 @@
+2023-04-16 22:49:54,160 INFO - ====== WebDriver manager ======
+2023-04-16 22:49:54,263 INFO - Get LATEST geckodriver version for None firefox
+2023-04-16 22:49:54,616 INFO - Getting latest mozilla release info for v0.33.0
+2023-04-16 22:49:54,829 INFO - About to download new driver from https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-win64.zip
+2023-04-16 22:49:55,669 INFO - Driver has been saved in cache [C:\Users\Blue\.wdm\drivers\geckodriver\win64\0.33]
+2023-04-16 22:50:13,808 ERROR - Could not find password field.

@@ -130,7 +130,11 @@ dmypy.json
 
 # Credentials stored there
 config/credentials.json
+config/
 
 .vscode/*
-geckodriver.log
 
+geckodriver.log
+logs/* 
+# Folders can't be empty for git to include them 
+!logs/LOG_DEFAULT

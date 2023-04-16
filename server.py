@@ -40,13 +40,6 @@ def readRoot():
 
 
 
-
-
-# Create a queue to store the scraped data
-scraped_data_queue = Queue()
-
-app = FastAPI() 
-
 @app.get("/twitter/{params}")
 def readRoot():
     return {"Hello": "World"}
