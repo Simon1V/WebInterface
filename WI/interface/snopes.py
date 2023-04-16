@@ -39,7 +39,7 @@ class SnopesScraper:
             if article_type.lower() == "fact check": # can handle other article types later
                 fact_check_titles[title] = link
             else:
-                self.logger.info(f"Skipping {title} because it is not a fact check article. Article type: {article_type}")
+                self.logger.debug(f"Skipping {title} because it is not a fact check article. Article type: {article_type}")
 
         return fact_check_titles
     
@@ -54,7 +54,7 @@ class SnopesScraper:
         response = Selector(text=self.html_docs[link])
         article_type = response.css('.section_title::text').getall()[1].strip()
         
-        logging.debug("{link} is a {article_type} article")
+        logging.debug(f"{link} is a {article_type} article")
 
         return article_type
 
@@ -149,7 +149,7 @@ class SnopesScraper:
         self.similarity_cache[title] = (title, jaccard_similarity, spacy_similarity, cosine_similarity_score)
         return self.similarity_cache[title]
 
-    async def search_snopes(self, search_term, jaccard_weight=0.33, spacy_weight=0.4, cosine_weight=0.27):
+    async def search(self, search_term, jaccard_weight=0.33, spacy_weight=0.4, cosine_weight=0.27):
 
         logging.debug(f"Jaccard similarity weight: {jaccard_weight}")
         logging.debug(f"Spacy similarity weight: {spacy_weight}")
