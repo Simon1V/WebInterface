@@ -250,12 +250,12 @@ class TwitterInterface():
 		
 		return True  
 			
-	def retweet(self, messageURL:str) -> bool:
-		assert self.loggedIn == True and isinstance(messageURL, str)  
+	def retweet(self, tweetURL:str) -> bool:
+		assert self.loggedIn == True and isinstance(tweetURL, str)  
 		return True  
 		
-	def like(self, messageURL:str) -> bool: 
-		assert self.loggedIn == True and isinstance(messageURL, str)  
+	def like(self, tweetURL:str) -> bool: 
+		assert self.loggedIn == True and isinstance(tweetURL, str)  
 		return True  
 		
 	def follow(self, accountName:str) -> bool: 

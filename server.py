@@ -20,7 +20,7 @@ wiLogger = WILogger()
 reddit_logger = wiLogger.setupConditionalLogger(logFilePath='logs/reddit.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)	
 snopes_logger = wiLogger.setupConditionalLogger(logFilePath='logs/snopes.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
 google_logger = wiLogger.setupConditionalLogger(logFilePath='logs/google.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
-# should use one logger as searching reddit will use the google and reddit logger
+
 
 # Create a queue to store the scraped data
 scraped_data_queue = Queue()
@@ -46,17 +46,30 @@ def login():
 	twitterInterface = TwitterInterface(username, password)
 	twitterInterface.login()
 
-
 # add picture support. 
 @app.get("/twitter/sendTweet")
 def sendTweet(message:str):
-    return {"Hello": message}
+    twitterInterface.sendTweet(message) 
+
+@app.get("/twitter/retweet")
+def retweet(tweetURL:str): 
+	twitterInterface.retweet(tweetURL)
 	
+@app.get("/twitter/like")
+def like(tweetURL:str): 
+	twitterInterface.like(tweetURL) 
+	
+@app.get("/twitter/follow")
+def follow(accountName:str): 
+	twitterInterface.follow(accountName) 
+	
+@app.get("/twitter/unfollow")
+def unfollow(accountName:str): 
+	twitterInterface.unfollow(accountName) 
 	
 @app.get("/twitter/reloadSession")
 def reloadTwitterSession():
 	twitterInterface.reloadSession()
-	
 	
 @app.get("/twitter/saveSession")
 def saveTwitterSession(): 
