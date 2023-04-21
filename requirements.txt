@@ -1,5 +1,5 @@
 scrapy == 2.8.0
-selenium 
+selenium == 4.8.3
 wheel == 0.40.0
 webdriver-manager==3.8.5
 beautifulsoup4==4.12.0
@@ -10,3 +10,4 @@ asyncio==3.4.3
 fastapi==0.68.1
 uvicorn==0.21.1
 selectolax==0.3.12
+pre-commit == 3.2.2
