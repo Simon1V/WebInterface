@@ -18,6 +18,7 @@ import random
 import string
 from urllib.parse import urlencode
 from functools import wraps
+import json
 
 TWITTER_BASE = 'https://www.twitter.com/'
 TWITTER_BASE_EXPLORE = 'https://www.twitter.com/explore'
@@ -49,28 +50,28 @@ class TwitterInterface():
 		self.webDriver = webdriver.Firefox( executable_path=GeckoDriverManager().install())		
 	
 	# We should agree on a convention camel case vs underscore! 	
-	def fetchTweets(self):
+	def fetchTweets(self, accountName:str):
 		session = requests.Session()
 		for cookie in self.webDriver.get_cookies():
 			session.cookies.set(cookie['name'], cookie['value'])
 
+		# Get that 
+		urlBuilder = UrlBuilder(accountName)
 
-		urlBuilder = UrlBuilder(self.profile_url)
+		guestTokenRequest = urlBuilder.getGuestToken()
+		print(guestTokenRequest)
+		csrfToken = urlBuilder.getCSRF()
 
-		guestToken_request = urlBuilder.get_guestToken()
-		csrfToken = urlBuilder._get_csrf()
-
-		response = requests.post(guestToken_request["url"], headers=guestToken_request["headers"])
-
-		if response.status_code == 200:
+		response = requests.post(guestTokenRequest["url"], headers=guestTokenRequest["headers"])
+		guestToken = ""
+		try: 
 			guestToken = response.json()["guestToken"]
 			print(f"Guest token: {guestToken}")
-		else:
-			print("Error fetching guest token:", response.status_code, response.text)
-
-
+		except Exception as err: 
+			self.logger.warning("Already logged in. ")
+		
 		urlBuilder.guestToken = guestToken
-
+		
 
 		# count seems to be able to be set to whataver you want, max I've tested is 100 though
 		variables = {"userId":"44196397","count":100,"includePromotedContent":True,"withQuickPromoteEligibilityTweetFields":True,"withDownvotePerspective":False,"withReactionsMetadata":False,"withReactionsPerspective":False,"withVoice":True,"withV2Timeline":True}
@@ -114,7 +115,7 @@ class TwitterInterface():
 			"features": features,
 		}
 
-		def get_next_cursor(response_json):
+		def getNextCursor(response_json:list):
 			for entry in response_json['data']['user']['result']['timeline_v2']['timeline']['instructions']:
 				if 'entries' in entry:
 					for content_entry in entry['entries']:
@@ -123,20 +124,50 @@ class TwitterInterface():
 							return content['value']
 			return None
 
-
-
 		response = requests.get(url, headers=headers, json=params)
-
 		response_json = response.json()
-
-		print(response_json)
-
+		self.logger.debug(response_json) 
 
 
-		next_cursor = get_next_cursor(response_json)
+
+		next_cursor = getNextCursor(response_json)
 		if next_cursor:
 			variables['cursor'] = next_cursor
 
+	def getUserIDByName(self, accountName:str)->int: 
+		variables = {
+		"screen_name": accountName,
+		"withSafetyModeUserFields": True
+		}
+		features = {
+		"blue_business_profile_image_shape_enabled": False,
+		"responsive_web_graphql_exclude_directive_enabled": True,
+		"verified_phone_label_enabled": False,
+		"responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+		"responsive_web_graphql_timeline_navigation_enabled": True
+		}
+		headers = {
+		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0",
+		"Accept": "/",
+		"Accept-Language": "en-US,en;q=0.5",
+		"content-type": "application/json",
+		"x-csrf-token": "eb504ef2b36b2c48428713d51441b1c4",
+		"x-guest-token": "1643097079949000708",
+		"x-twitter-client-language": "en",
+		"x-twitter-active-user": "yes",
+		"authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+		}
+		response = requests.get(url, headers=headers)
+		userData = response.json()
+		URL_BASE = "https://twitter.com/i/api/graphql/k26ASEiniqy4eXMdknTSoQ/UserByScreenName"
+		url_params = {
+		"variables": json.dumps(variables),
+		"features": json.dumps(features)
+		}
+		url = URL_BASE + "?" + urlencode(url_params)
+		self.logger.debug("User ID: "  + str(userID))
+		return userID
+		
 	# Some tweetURLs require to be logged in (example: visibility only for followers), ignore for now. 
 	def getTweetScreenshotByURL(self, tweetURL:str) -> bool : 
 		assert isinstance(tweetURL, str)
@@ -267,16 +298,16 @@ class TwitterInterface():
 class UrlBuilder:
 	URL_guestToken = "https://api.twitter.com/1.1/guest/activate.json"
 	URL_API_INIT = "https://twitter.com/i/api/1.1/branch/init.json"
-	URL_USER_BY_SCREEN_NAME = "https://api.twitter.com/graphql/rePnxwe9LZ51nQ7Sn_xN_A/UserByScreenName"
+	URL_userByScreenName = "https://api.twitter.com/graphql/rePnxwe9LZ51nQ7Sn_xN_A/UserByScreenName"
 	URL_USER_TWEETS = "https://twitter.com/i/api/graphql/OXXUyHfKYZ-xLx4NcL9-_Q/UserTweets"
 	URL_USER_TWEETS_WITH_REPLIES = "https://twitter.com/i/api/graphql/nrdle2catTyGnTyj1Qa7wA/UserTweetsAndReplies"
 	URL_TRENDS = "https://twitter.com/i/api/2/guide.json"
 	URL_SEARCH = "https://twitter.com/i/api/2/search/adaptive.json"
 	URL_TWEET_DETAILS = "https://api.twitter.com/graphql/NNiD2K-nEYUfXlMwGCocMQ/TweetDetail"
 
-	def __init__(self, profile_url):
-		self.username = profile_url.split("/")[-1] if profile_url else None
-		self.user_id = None
+	def __init__(self, accountName):
+		self.username = accountName.split("/")[-1] if accountName else None
+		self.userID = None
 		self.guestToken = None
 	
 	def return_with_headers(func):
@@ -302,7 +333,7 @@ class UrlBuilder:
 			'sec-fetch-mode': 'cors',
 			'sec-fetch-site': 'same-site',
 			'user-agent': REQUEST_USER_AGENT,
-			'x-csrf-token': self._get_csrf(),
+			'x-csrf-token': self.getCSRF(),
 			'x-twitter-active-user': 'yes',
 			'x-twitter-client-language': 'en',
 		}
@@ -316,7 +347,7 @@ class UrlBuilder:
 		return headers
 
 	@staticmethod
-	def _get_csrf():
+	def getCSRF():
 		return ''.join(random.choices(string.ascii_letters + string.digits, k=32))
 
 	@staticmethod
@@ -324,44 +355,44 @@ class UrlBuilder:
 		return "?".join([url, params])
 
 	@return_with_headers
-	def get_guestToken(self):
+	def getGuestToken(self):
 		return self.URL_guestToken
 
 	@return_with_headers
-	def init_api(self):
+	def initAPI(self):
 		return self.URL_API_INIT
 
 	@return_with_headers
-	def user_by_screen_name(self, username):
+	def userByScreenName(self, username:str):
 		params = {
 			'variables': f'{{"screen_name":"{username}","withSafetyModeUserFields":true,"withSuperFollowsUserFields":true}}',
 			'features': '{"responsive_web_twitter_blue_verified_badge_is_enabled":true,"responsive_web_graphql_exclude_directive_enabled":false,"verified_phone_label_enabled":false,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true}',
 		}
-		return self._build(self.URL_USER_BY_SCREEN_NAME, urlencode(params))
+		return self._build(self.URL_userByScreenName, urlencode(params))
 
 	@return_with_headers
-	def user_tweets(self, user_id, replies=False, cursor=None):
+	def user_tweets(self, userID:int, replies:bool=False, cursor=None):
 		if replies:
 			if not cursor:
 				params = {
-					'variables': f'{{"userId":"{user_id}","count":40,"includePromotedContent":true,"withCommunity":true,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
+					'variables': f'{{"userId":"{}","count":40,"includePromotedContent":true,"withCommunity":true,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
 					'features': '{"responsive_web_twitter_blue_verified_badge_is_enabled":true,"responsive_web_graphql_exclude_directive_enabled":false,"verified_phone_label_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"vibe_api_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":false,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":false,"interactive_text_enabled":true,"responsive_web_text_conversations_enabled":false,"responsive_web_enhance_cards_enabled":false}',
 				}
 			else:
 				params = {
-					'variables': f'{{"userId":"{user_id}","count":40,"cursor":"{cursor}","includePromotedContent":true,"withCommunity":true,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
+					'variables': f'{{"userId":"{userID}","count":40,"cursor":"{cursor}","includePromotedContent":true,"withCommunity":true,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
 					'features': '{"responsive_web_twitter_blue_verified_badge_is_enabled":true,"responsive_web_graphql_exclude_directive_enabled":false,"verified_phone_label_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"vibe_api_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":false,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":false,"interactive_text_enabled":true,"responsive_web_text_conversations_enabled":false,"responsive_web_enhance_cards_enabled":false}',
 				}
 			return self._build(self.URL_USER_TWEETS_WITH_REPLIES, urlencode(params))
 
 		if not cursor:
 			params = {
-				'variables': f'{{"userId":"{user_id}","count":40,"includePromotedContent":true,"withQuickPromoteEligibilityTweetFields":true,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
+				'variables': f'{{"userId":"{userID}","count":40,"includePromotedContent":true,"withQuickPromoteEligibilityTweetFields":true,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
 				'features': '{"responsive_web_twitter_blue_verified_badge_is_enabled":true,"responsive_web_graphql_exclude_directive_enabled":false,"verified_phone_label_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"vibe_api_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":false,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":false,"interactive_text_enabled":true,"responsive_web_text_conversations_enabled":false,"responsive_web_enhance_cards_enabled":false}',
 			}
 		else:
 			params = {
-				'variables': f'{{"userId":"{user_id}","count":40,"cursor":"{cursor}","includePromotedContent":true,"withQuickPromoteEligibilityTweetFields":true,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
+				'variables': f'{{"userId":"{userID}","count":40,"cursor":"{cursor}","includePromotedContent":true,"withQuickPromoteEligibilityTweetFields":true,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
 				'features': '{"responsive_web_twitter_blue_verified_badge_is_enabled":true,"responsive_web_graphql_exclude_directive_enabled":false,"verified_phone_label_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"vibe_api_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":false,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":false,"interactive_text_enabled":true,"responsive_web_text_conversations_enabled":false,"responsive_web_enhance_cards_enabled":false}',
 			}
 		return self._build(self.URL_USER_TWEETS, urlencode(params))
@@ -408,7 +439,7 @@ class UrlBuilder:
 		return self._build(self.URL_TRENDS, urlencode(params))
 
 	@return_with_headers
-	def search(self, keyword, cursor, filter_):
+	def search(self, keyword:str, cursor, filter_:str):
 		params = {
 			'include_profile_interstitial_type': '1',
 			'include_blocking': '1',
@@ -463,9 +494,9 @@ class UrlBuilder:
 		return self._build(self.URL_SEARCH, urlencode(params))
 
 	@return_with_headers
-	def tweet_detail(self, tweet_id):
+	def tweet_detail(self, tweetID:int):
 		params = {
-			'variables': f'{{"focalTweetId":"{tweet_id}","with_rux_injections":false,"includePromotedContent":true,"withCommunity":true,"withQuickPromoteEligibilityTweetFields":true,"withBirdwatchNotes":false,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
+			'variables': f'{{"focalTweetId":"{tweetID}","with_rux_injections":false,"includePromotedContent":true,"withCommunity":true,"withQuickPromoteEligibilityTweetFields":true,"withBirdwatchNotes":false,"withSuperFollowsUserFields":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withSuperFollowsTweetFields":true,"withVoice":true,"withV2Timeline":true}}',
 			'features': '{"responsive_web_twitter_blue_verified_badge_is_enabled":true,"responsive_web_graphql_exclude_directive_enabled":false,"verified_phone_label_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"vibe_api_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":false,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":false,"interactive_text_enabled":true,"responsive_web_text_conversations_enabled":false,"responsive_web_enhance_cards_enabled":false}',
 		}
 		return self._build(self.URL_TWEET_DETAILS, urlencode(params))

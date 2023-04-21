@@ -141,9 +141,6 @@ class GoogleSearchScraper:
         self.results = []
         html = asyncio.run(self.fetch(search_term))
         parser = HTMLParser(html)
-        # save html to file
-        with open("test.html", "w") as f:
-            f.write(html)
         res_body = parser.css_first(RESULLTS_SELECTOR)
         main_results = res_body.css(".g ")
 

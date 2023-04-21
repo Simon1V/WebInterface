@@ -21,13 +21,19 @@ reddit_logger = wiLogger.setupConditionalLogger(logFilePath='logs/reddit.log', d
 snopes_logger = wiLogger.setupConditionalLogger(logFilePath='logs/snopes.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
 google_logger = wiLogger.setupConditionalLogger(logFilePath='logs/google.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
 
+# Only overwritten by login.  
+twitterInterface = TwitterInterface() 
+
+# ==== TEST ====
+
 @app.get("/")
 def hello(): 
 	return {"message": "Hello universe."}
 
+# ==== TWITTER ==== 
 
-@app.get("/twitter")
-def readRoot():
+@app.get("/twitter/login")
+def login():
 	logger = logging.getLogger(__name__)
 	credentials = Credentials(pw=None) 
 	username, password = credentials.getCredentials("twitter", ["username", "password"])
@@ -35,62 +41,57 @@ def readRoot():
 	# Example:
 	twitterInterface = TwitterInterface(username, password)
 	twitterInterface.login()
-	return 
-	twitterInterface.fetch_tweets()
 
 
-
-@app.get("/twitter/{params}")
-def readRoot():
-    return {"Hello": "World"}
+# add picture support. 
+@app.get("/twitter/sendTweet")
+def sendTweet(message:str):
+    return {"Hello": message}
 	
 	
-def getTweetsOfAccount(): 
+@app.get("/twitter/getUser")	
+def getTweetsOfAccount(username:str, nTweets:int): 
 	pass 
 
 
+@app.get("/twitter/reloadSession")
+def reloadTwitterSession():
+	twitterInterface.reloadSession()
+	
+	
+@app.get("/twitter/saveSession")
+def saveTwitterSession(): 
+	twitterInterface.saveSession() 
+
+@app.get("/twitter/getTweetsOfAccount") 
+def getTweets(): 
+	twitterInferface.fetchTweets() 
+
+# ==== REDDIT ====
 
 @app.get("/reddit/get_page/")
 def scrapePermalink(permalink: str):
-
-
     scraper = RedditScraper( scraped_data_queue=scraped_data_queue, logger=reddit_logger)
-
-
-
     scraper.get_page(permalink=permalink)
     
     # Retrieve the scraped data from the queue
     scraped_data = scraped_data_queue.get()
-
-
     return scraped_data
 
 
 @app.get("/reddit/search/")
 def scrapePermalink(search_term: str):
-
-
     scraper = RedditScraper( scraped_data_queue=scraped_data_queue, logger=reddit_logger)
-	
-
     scraper.search(search_term=search_term)
 
 	# Retrieve the scraped data from the queue
     scraped_data = scraped_data_queue.get()
-
-
     return scraped_data
-
 
 
 @app.get("/google/")
 def scrapePermalink(search_term: str):
-
-
     scraper = GoogleSearchScraper(logger=google_logger)
-	
-
     response = scraper.search(search_term=search_term)
     print(response)
     if response.top_content:
@@ -99,6 +100,7 @@ def scrapePermalink(search_term: str):
     	return(response.results[0])	
 
 
+# ==== SNOPES ====
 
 @app.get("/snopes")
 async def scrapeSnopes(search_term: str):
@@ -106,11 +108,8 @@ async def scrapeSnopes(search_term: str):
     response = await scraper.search(search_term)
     return response
 
-
 	
 if __name__ == "__main__":
-
-	
 	logger = wiLogger.setupConditionalLogger(logFilePath=fileState.LOG_FILE, debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)	
 
 	# Create a queue to store the scraped data
