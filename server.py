@@ -20,6 +20,10 @@ wiLogger = WILogger()
 reddit_logger = wiLogger.setupConditionalLogger(logFilePath='logs/reddit.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)	
 snopes_logger = wiLogger.setupConditionalLogger(logFilePath='logs/snopes.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
 google_logger = wiLogger.setupConditionalLogger(logFilePath='logs/google.log', debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)
+# should use one logger as searching reddit will use the google and reddit logger
+
+# Create a queue to store the scraped data
+scraped_data_queue = Queue()
 
 @app.get("/")
 def hello(): 
@@ -92,7 +96,6 @@ def scrapePermalink(search_term: str):
 	
 
     response = scraper.search(search_term=search_term)
-    print(response)
     if response.top_content:
         return response.top_content
     else:
@@ -113,6 +116,5 @@ if __name__ == "__main__":
 	
 	logger = wiLogger.setupConditionalLogger(logFilePath=fileState.LOG_FILE, debugLevelConsole=logging.DEBUG, debugLevelFile=logging.INFO,conditionalFormatterForConsole=False)	
 
-	# Create a queue to store the scraped data
-	scraped_data_queue = Queue() 
+
 	uvicorn.run(app, host="127.0.0.1", port=8000)
