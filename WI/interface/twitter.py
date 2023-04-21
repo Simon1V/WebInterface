@@ -44,11 +44,9 @@ class TwitterInterface():
 		
 		options = Options()
 		if headless == True:
-			options.headless = True
-		# Passing options is causing trouble currently. 	
+			options.headless = True	
 		self.webDriver = webdriver.Firefox(options=options, executable_path=GeckoDriverManager().install())		
 	
-	# We should agree on a convention camel case vs underscore! 	
 	def fetchTweets(self, accountName:str):
 		session = requests.Session()
 		for cookie in self.webDriver.get_cookies():

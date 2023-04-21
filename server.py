@@ -53,11 +53,6 @@ def sendTweet(message:str):
     return {"Hello": message}
 	
 	
-@app.get("/twitter/getUser")	
-def getTweetsOfAccount(username:str, nTweets:int): 
-	pass 
-
-
 @app.get("/twitter/reloadSession")
 def reloadTwitterSession():
 	twitterInterface.reloadSession()
@@ -68,7 +63,7 @@ def saveTwitterSession():
 	twitterInterface.saveSession() 
 
 @app.get("/twitter/getTweetsOfAccount") 
-def getTweets(): 
+def getTweets(username:str, nTweets:int): 
 	twitterInferface.fetchTweets() 
 
 # ==== REDDIT ====
