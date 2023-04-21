@@ -1,4 +1,4 @@
-A FastAPI based WebInterface to allow AI models quick access to social media sites. 
+Help your AI chatbots to quickly access social media sites to allow their participation in online discussions. 
 
 - Scrap reddit tweets. 
 - Twitter login, tweet, retweet, like, follow, unfollow. 

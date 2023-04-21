@@ -78,6 +78,7 @@ def saveTwitterSession():
 @app.get("/twitter/getTweetsOfAccount") 
 def getTweets(username:str, nTweets:int): 
 	twitterInferface.fetchTweets() 
+	
 
 # ==== REDDIT ====
 
